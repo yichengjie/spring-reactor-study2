@@ -6,10 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import java.time.Duration;
-import java.time.ZoneId;
-
 import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 
 /**
@@ -20,7 +17,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 public class ConnectionFactoryTest {
 
     @Test
-    public void world() throws InterruptedException {
+    public void hello() throws InterruptedException {
         ConnectionFactoryOptions options = ConnectionFactoryOptions.builder()
                 .option(DRIVER, "mysql")
                 //.option(HOST, "192.168.99.51")
@@ -33,26 +30,25 @@ public class ConnectionFactoryTest {
                 .option(Option.valueOf("socketTimeout"), Duration.ofSeconds(4)) // deprecated since 1.0.1, because it has no effect and serves no purpose.
                 .build();
         ConnectionFactory connectionFactory = ConnectionFactories.get(options);
-
         // Creating a Mono using Project Reactor
         Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
         connectionMono.flatMapMany(connection -> {
-                    String sql = "SELECT * FROM audit_log";
-                    return Flux.from(connection.createStatement(sql).execute())
-                            .flatMap(result ->
-                                    result.map((row, metadata) -> {
-                                        Long id = row.get("id", Long.class);
-                                        String name = row.get("name", String.class);
-                                        String username = row.get("username", String.class);
-                                        UserEntity user = new UserEntity();
-                                        user.setId(id);
-                                        user.setName(name);
-                                        user.setUsername(username);
-                                        return user;
-                                    })
-                            );
-                })
-                .subscribe(entity -> log.info("entity : {}", entity));
+            String sql = "SELECT * FROM user" ;
+            return Flux.from(connection.createStatement(sql).execute())
+                .flatMap(result ->
+                    result.map((row, metadata) -> {
+                        Long id = row.get("id", Long.class);
+                        String name = row.get("name", String.class);
+                        String username = row.get("username", String.class);
+                        UserEntity user = new UserEntity();
+                        user.setId(id);
+                        user.setName(name);
+                        user.setUsername(username);
+                        return user;
+                    })
+                );
+        })
+        .subscribe(entity -> log.info("entity : {}", entity));
         Thread.sleep(2000);
     }
 
